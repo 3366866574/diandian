@@ -1,0 +1,27 @@
+# 依赖
+node_modules/
+
+# Android 构建产物
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# 本地开发/自检脚本与截图（非项目本体）
+shots*/
+webcheck*.cjs
+_gen_*.py
+_preview_*.png
+gen_icons.ps1
+
+# 临时文件
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml

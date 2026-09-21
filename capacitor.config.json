@@ -1,0 +1,11 @@
+{
+  "appId": "com.diandian.counter",
+  "appName": "点点计数",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

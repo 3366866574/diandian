@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>点点计数</title>
+<style>
+  :root {
+    --bg: #f4f2ed;
+    --card: #ffffff;
+    --ink: #2b2b2b;
+    --ink2: #8a8578;
+    --accent: #e0a23a;
+    --accent-deep: #b97f1e;
+    --line: #e6e1d6;
+    --danger: #c05b4d;
+    --fs: 17px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+  #app { max-width:560px; margin:0 auto; height:100%; display:flex; flex-direction:column; padding-top:env(safe-area-inset-top); }
+
+  /* ── 顶栏 ── */
+  header { padding:14px 16px 10px; display:flex; align-items:baseline; justify-content:space-between; flex-shrink:0; }
+  header h1 { font-size:20px; letter-spacing:1px; }
+  header .date { font-size:12px; color:var(--ink2); }
+
+  /* ── 主体区 ── */
+  main { flex:1; overflow:hidden; position:relative; }
+  .tab { position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:none; padding:0 14px calc(16px + env(safe-area-inset-bottom)); }
+  .tab.on { display:block; }
+
+  /* ── 主页：阅读+侧栏+底部计数条 ── */
+  #tabHome { padding:0; overflow:hidden; }
+  #tabHome.on { display:flex; flex-direction:column; }
+  .readwrap { flex:1; min-height:0; display:flex; }
+  .sutra-pane { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:4px 10px 30px 16px; min-width:0; }
+  .sutra-head { font-size:17px; font-weight:700; margin:6px 0 2px; }
+  .sutra-from { font-size:11px; color:var(--ink2); margin-bottom:12px; }
+  .sutra-body p { font-size:var(--fs); line-height:1.9; margin-bottom:10px; text-align:justify; }
+  .sutra-body .meta { font-size:12px; color:var(--ink2); margin-bottom:14px; }
+  /* 拼音注音 */
+  ruby { ruby-align:center; margin:0 3px; }
+  rt { font-size:.58em; color:var(--ink); font-weight:400; letter-spacing:.5px; }
+  .with-py p, .with-py { line-height:2.5; }
+  .sutra-empty { color:var(--ink2); font-size:14px; text-align:center; padding:80px 20px; line-height:2; }
+
+  .rail { width:104px; flex-shrink:0; display:flex; flex-direction:column; gap:9px; padding:4px 2px 30px; border-left:1px solid var(--line); }
+  .pick { font-size:11px; color:var(--ink2); text-align:center; padding:5px 2px; background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cntbox { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .cntbox .num { font-size:26px; font-weight:700; color:var(--accent-deep); line-height:1; }
+  .cntbox .lab { font-size:10px; color:var(--ink2); }
+  .btn-plus { width:58px; height:58px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:26px; font-weight:300; line-height:1; touch-action:manipulation; }
+  .btn-plus:active { background:var(--accent-deep); transform:scale(.93); }
+  .btn-minus { width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--ink2); font-size:16px; line-height:1; touch-action:manipulation; }
+  .zenbtn { width:100%; padding:8px 0; border-radius:8px; border:1px solid var(--accent); background:#faf0dd; color:var(--accent-deep); font-size:12px; }
+  .zenbtn:active { background:#f2e2c4; }
+  .timebox { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .timebox .lab { font-size:10px; color:var(--ink2); }
+  .timebox .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .tbtn { width:100%; padding:8px 0; border-radius:8px; border:1px solid var(--line); background:var(--bg); font-size:12px; }
+  .tbtn:active { background:var(--line); }
+  .tbtn.run { background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  /* ── 主页底部计数条（拇指区，好按） ── */
+  .homebar { flex-shrink:0; display:flex; align-items:center; gap:12px; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--card); }
+  .hb-minus { width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--ink2); font-size:22px; line-height:1; touch-action:manipulation; flex-shrink:0; }
+  .hb-minus:active { background:var(--line); }
+  .hb-mid { flex:1; min-width:0; text-align:center; }
+  .hb-num { font-size:30px; font-weight:700; color:var(--accent-deep); line-height:1; font-variant-numeric:tabular-nums; }
+  .hb-lab { font-size:11px; color:var(--ink2); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hb-plus { width:66px; height:66px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:23px; font-weight:600; line-height:1; touch-action:manipulation; flex-shrink:0; box-shadow:0 4px 12px rgba(224,162,58,.35); }
+  .hb-plus:active { background:var(--accent-deep); transform:scale(.93); }
+
+  /* ── 书架 ── */
+  .shelf-group { font-size:12px; color:var(--ink2); margin:16px 2px 8px; }
+  .book { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+  .book .bt { font-size:16px; font-weight:600; }
+  .book .bs { font-size:11px; color:var(--ink2); margin-top:3px; }
+  .book .go { color:var(--ink2); font-size:18px; }
+  .book.home::after { content:"在主页"; font-size:10px; color:var(--accent-deep); background:#faf0dd; padding:2px 8px; border-radius:8px; margin-left:8px; }
+  .bk-main { flex:1; min-width:0; }
+  .bk-act { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .fav { background:none; border:none; font-size:22px; line-height:1; color:var(--ink2); padding:2px 4px; }
+  .fav.on { color:var(--accent); }
+  .pick-scroll { max-height:52vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .pick-cap { font-size:12px; color:var(--ink2); margin:10px 2px 6px; }
+  .importbtn { width:100%; padding:13px 0; border:1px dashed var(--ink2); border-radius:12px; background:none; color:var(--ink2); font-size:14px; margin-top:6px; }
+
+  /* ── 整屏页（阅读/详情/设置/教程/导入） ── */
+  .page { position:fixed; inset:0; background:var(--bg); z-index:30; transform:translateX(100%); transition:transform .22s ease; display:flex; flex-direction:column; }
+  .page.open { transform:translateX(0); }
+  .page-head { padding:calc(12px + env(safe-area-inset-top)) 16px 10px; display:flex; align-items:center; gap:10px; flex-shrink:0; border-bottom:1px solid var(--line); background:var(--bg); }
+  .back { background:none; border:none; color:var(--ink); font-size:22px; padding:2px 8px 2px 0; }
+  .page-head .pt { flex:1; font-size:17px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .set-home { border:1px solid var(--accent); background:#faf0dd; color:var(--accent-deep); font-size:12px; padding:7px 12px; border-radius:18px; }
+  .set-home.cur { border-color:var(--line); background:var(--bg); color:var(--ink2); }
+  .page-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 18px calc(30px + env(safe-area-inset-bottom)); max-width:560px; margin:0 auto; width:100%; }
+  .page-body p { font-size:var(--fs); line-height:1.95; margin-bottom:12px; text-align:justify; }
+  .page-body .meta { font-size:12px; color:var(--ink2); margin-bottom:16px; }
+  .py-note { font-size:12px; color:var(--ink2); line-height:1.8; background:#faf0dd; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:18px; }
+
+  /* ── 计数页 ── */
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; margin-bottom:12px; padding:14px 16px; display:flex; align-items:center; gap:10px; }
+  .card .info { flex:1; min-width:0; }
+  .card .name { font-size:16px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card .name .home-mark { font-size:10px; color:var(--accent-deep); background:#faf0dd; padding:1px 6px; border-radius:8px; margin-left:6px; font-weight:400; }
+  .card .sub { font-size:12px; color:var(--ink2); margin-top:3px; }
+  .card .sub b { color:var(--accent-deep); font-weight:700; }
+  .mini-btn { padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); font-size:12px; color:var(--ink2); }
+  .mini-btn:active { background:var(--line); }
+  .addcard { width:100%; padding:14px 0; border:1px dashed var(--ink2); border-radius:14px; background:none; color:var(--ink2); font-size:14px; margin-bottom:14px; }
+
+  /* 详情 */
+  .chart { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 12px 10px; margin-bottom:16px; }
+  .chart .cap { font-size:12px; color:var(--ink2); margin-bottom:10px; padding:0 4px; }
+  .chart .bars { display:flex; align-items:flex-end; gap:4px; height:110px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .bar { width:70%; max-width:26px; background:var(--line); border-radius:3px 3px 0 0; min-height:2px; }
+  .bar.hit { background:var(--accent); }
+  .bar-val { font-size:10px; color:var(--ink2); margin-bottom:3px; min-height:12px; }
+  .bar-lab { font-size:10px; color:var(--ink2); margin-top:5px; white-space:nowrap; }
+  .rec { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:18px; }
+  .rec-item { display:flex; justify-content:space-between; padding:12px 16px; font-size:14px; border-bottom:1px solid var(--line); }
+  .rec-item:last-child { border-bottom:none; }
+  .rec-item .n { color:var(--accent-deep); font-weight:600; }
+  .rec-item.today .d::after { content:"今天"; font-size:11px; color:var(--accent-deep); background:#faf0dd; padding:1px 7px; border-radius:8px; margin-left:8px; }
+  .ops { display:flex; gap:12px; }
+  .op-btn { flex:1; padding:13px 0; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:14px; }
+  .op-btn:active { background:var(--line); }
+  .op-btn.danger { color:var(--danger); }
+  .detail-title { font-size:21px; font-weight:700; margin:2px 0 2px; }
+  .detail-total { font-size:13px; color:var(--ink2); margin-bottom:18px; }
+  .detail-total b { color:var(--accent-deep); font-size:16px; }
+
+  /* ── 全屏禅修计数页 ── */
+  #zenPage { position:fixed; inset:0; z-index:50; background:#20262e; color:#f4f2ed; display:none; flex-direction:column; }
+  #zenPage.open { display:flex; }
+  .zen-top { padding:calc(14px + env(safe-area-inset-top)) 18px 0; display:flex; align-items:center; justify-content:space-between; }
+  .zen-top .zn { font-size:14px; color:#c9c3b6; }
+  .zen-top .zx { font-size:15px; color:#c9c3b6; background:none; border:1px solid #3a424d; padding:6px 12px; border-radius:16px; }
+  .zen-main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+  .zen-num { font-size:120px; font-weight:800; line-height:1; color:#fff; font-variant-numeric:tabular-nums; }
+  .zen-hint { font-size:14px; color:#9aa0a8; letter-spacing:2px; }
+  .zen-sub { font-size:13px; color:#7d838c; }
+  .zen-bar { display:flex; gap:12px; padding:0 18px calc(26px + env(safe-area-inset-bottom)); }
+  .zen-bar button { flex:1; padding:15px 0; border-radius:12px; border:1px solid #3a424d; background:#2b333d; color:#e6e1d6; font-size:15px; }
+  .zen-bar button.big { flex:1.4; background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
+  .zen-flash { animation:zenpulse .18s ease; }
+  @keyframes zenpulse { 0%{transform:scale(1);} 40%{transform:scale(1.06);} 100%{transform:scale(1);} }
+
+  /* ── 设置页 ── */
+  .set-group { font-size:12px; color:var(--ink2); margin:18px 2px 8px; }
+  .set-row { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .set-row .sl { font-size:15px; }
+  .set-row .sd { font-size:11px; color:var(--ink2); margin-top:3px; }
+  .seg { display:flex; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .seg button { padding:8px 12px; background:var(--bg); border:none; font-size:13px; color:var(--ink2); border-right:1px solid var(--line); }
+  .seg button:last-child { border-right:none; }
+  .seg button.on { background:var(--accent); color:#fff; }
+  .switch { width:50px; height:30px; border-radius:15px; background:var(--line); position:relative; transition:background .2s; flex-shrink:0; }
+  .switch.on { background:var(--accent); }
+  .switch::after { content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:left .2s; }
+  .switch.on::after { left:23px; }
+  .set-btn { padding:9px 16px; border-radius:10px; border:1px solid var(--line); background:var(--bg); font-size:13px; color:var(--ink); }
+  .set-btn:active { background:var(--line); }
+  .set-btn.hl { border-color:var(--accent); background:#faf0dd; color:var(--accent-deep); }
+  .ver { font-size:12px; color:var(--ink2); text-align:center; margin:22px 0 8px; line-height:1.8; }
+
+  /* ── 教程页 ── */
+  .tut-step { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:12px; padding:14px 16px; margin-bottom:14px; }
+  .tut-step .tt { font-size:17px; font-weight:700; color:var(--accent-deep); margin-bottom:6px; }
+  .tut-step .tx { font-size:15px; line-height:1.9; color:var(--ink); }
+
+  /* ── 导入页 ── */
+  .imp-lab { font-size:13px; color:var(--ink2); margin:14px 2px 6px; }
+  .imp-in { width:100%; padding:12px 14px; font-size:15px; border:1px solid var(--line); border-radius:10px; outline:none; background:var(--card); color:var(--ink); }
+  .imp-in:focus { border-color:var(--accent); }
+  textarea.imp-in { min-height:220px; line-height:1.8; resize:vertical; font-family:inherit; }
+  .imp-file { margin-top:10px; font-size:13px; color:var(--accent-deep); }
+  .imp-save { width:100%; margin-top:20px; padding:15px 0; border-radius:12px; border:none; background:var(--accent); color:#fff; font-size:16px; font-weight:600; }
+  .imp-save:active { background:var(--accent-deep); }
+
+  /* ── 底部导航 ── */
+  nav { display:flex; flex-shrink:0; border-top:1px solid var(--line); background:var(--card); padding-bottom:env(safe-area-inset-bottom); max-width:560px; margin:0 auto; width:100%; }
+  nav button { flex:1; padding:10px 0 8px; background:none; border:none; font-size:11px; color:var(--ink2); display:flex; flex-direction:column; align-items:center; gap:2px; }
+  nav button .ic { font-size:19px; line-height:1; }
+  nav button.on { color:var(--accent-deep); font-weight:600; }
+
+  /* ── 对话框 ── */
+  .mask { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60; display:none; align-items:flex-end; justify-content:center; }
+  .mask.show { display:flex; }
+  .dialog { background:var(--card); width:100%; max-width:560px; border-radius:18px 18px 0 0; padding:22px 20px calc(24px + env(safe-area-inset-bottom)); }
+  .dialog h3 { font-size:17px; margin-bottom:14px; text-align:center; }
+  .dialog input { width:100%; padding:13px 14px; font-size:16px; border:1px solid var(--line); border-radius:10px; outline:none; background:var(--bg); color:var(--ink); }
+  .dialog input:focus { border-color:var(--accent); }
+  .dialog .row { display:flex; gap:12px; margin-top:16px; }
+  .dialog .row button { flex:1; padding:13px 0; border-radius:10px; border:none; font-size:15px; }
+  .dlg-cancel { background:var(--bg); color:var(--ink2); border:1px solid var(--line) !important; }
+  .dlg-ok { background:var(--accent); color:#fff; }
+  .dlg-ok:active { background:var(--accent-deep); }
+  .upd-notes { font-size:14px; line-height:1.8; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:40vh; overflow-y:auto; white-space:pre-wrap; }
+  .about-body { max-height:52vh; overflow-y:auto; -webkit-overflow-scrolling:touch; text-align:justify; }
+  .about-body p { font-size:14px; line-height:1.85; color:var(--ink); margin-bottom:10px; }
+  .about-body .ab-sub { text-align:center; color:var(--ink2); font-size:12.5px; margin-bottom:12px; }
+  .about-check { display:flex; align-items:center; gap:8px; font-size:15px; color:var(--ink); margin:14px 2px 4px; padding:6px 0; }
+  .about-check input { width:20px; height:20px; accent-color:var(--accent); }
+  .upd-ver { text-align:center; font-size:13px; color:var(--ink2); margin-bottom:10px; }
+
+  .fly { position:fixed; z-index:80; pointer-events:none; font-size:20px; font-weight:700; color:var(--accent-deep); animation:flyup .7s ease-out forwards; }
+  @keyframes flyup { from {opacity:1; transform:translateY(0);} to {opacity:0; transform:translateY(-46px);} }
+  .toast { position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:rgba(43,43,43,.92); color:#fff; font-size:13px; padding:9px 18px; border-radius:20px; z-index:90; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; max-width:88vw; text-align:center; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 id="hdrTitle">点点计数</h1>
+    <span class="date" id="topDate"></span>
+  </header>
+  <main>
+    <!-- 主页：经文 + 右侧计数/计时 -->
+    <div class="tab on" id="tabHome">
+      <div class="readwrap">
+        <div class="sutra-pane" id="homeSutraPane"></div>
+        <div class="rail">
+          <button class="pick" id="railSutra">换经文</button>
+          <button class="pick" id="railPick">选择计数</button>
+          <button class="zenbtn" id="railZen">全屏计数</button>
+          <div class="timebox">
+            <div class="lab">计时</div>
+            <div class="t" id="timeShow">00:00</div>
+            <button class="tbtn" id="timeToggle">开始</button>
+            <button class="tbtn" id="timeReset">归零</button>
+          </div>
+        </div>
+      </div>
+      <div class="homebar">
+        <button class="hb-minus" id="railMinus">−</button>
+        <div class="hb-mid">
+          <div class="hb-num" id="railNum">0</div>
+          <div class="hb-lab">今日 · <span id="hbName">未选择</span></div>
+        </div>
+        <button class="hb-plus" id="railPlus">+1</button>
+      </div>
+    </div>
+    <!-- 计数管理 -->
+    <div class="tab" id="tabCount"></div>
+    <!-- 书架 -->
+    <div class="tab" id="tabShelf"></div>
+    <!-- 设置 -->
+    <div class="tab" id="tabSettings"></div>
+
+    <!-- 计数详情整屏 -->
+    <div class="page" id="detailPage">
+      <div class="page-head"><button class="back" id="btnBack">‹</button><span class="pt" id="dName2"></span></div>
+      <div class="page-body">
+        <div class="detail-total">累计 <b id="dTotal">0</b> 次 · 今天 <b id="dToday">0</b> 次</div>
+        <div class="chart"><div class="cap">最近 14 天</div><div class="bars" id="dBars"></div></div>
+        <div class="rec" id="dRecords"></div>
+        <div class="ops">
+          <button class="op-btn" id="btnRename">重命名</button>
+          <button class="op-btn" id="btnReset">清零今天</button>
+          <button class="op-btn danger" id="btnDelete">删除</button>
+        </div>
+      </div>
+    </div>
+    <!-- 经文阅读整屏 -->
+    <div class="page" id="readPage">
+      <div class="page-head">
+        <button class="back" id="btnReadBack">‹</button>
+        <span class="pt" id="rTitle"></span>
+        <button class="set-home" id="btnSetHome">放到主页</button>
+      </div>
+      <div class="page-body" id="rBody"></div>
+    </div>
+    <!-- 导入经文整屏 -->
+    <div class="page" id="importPage">
+      <div class="page-head"><button class="back" id="btnImportBack">‹</button><span class="pt">导入经文</span></div>
+      <div class="page-body">
+        <div class="imp-lab">经文名称（必填）</div>
+        <input class="imp-in" id="impName" type="text" maxlength="30" placeholder="例如：观音菩萨赞">
+        <div class="imp-lab">出处 / 译者（可不填）</div>
+        <input class="imp-in" id="impSource" type="text" maxlength="40" placeholder="例如：某某经 / 某某 译">
+        <div class="imp-lab">正文（每段之间空一行）</div>
+        <textarea class="imp-in" id="impBody" placeholder="把经文粘贴到这里，&#10;&#10;每段之间空一行，保存后会自动分段。"></textarea>
+        <label class="imp-file">或从手机选 .txt 文件导入：<input type="file" id="impFile" accept=".txt,text/plain" style="display:none"></label>
+        <button class="imp-save" id="impSave">保存到书架</button>
+        <div style="height:20px"></div>
+      </div>
+    </div>
+    <!-- 教程整屏 -->
+    <div class="page" id="tutPage">
+      <div class="page-head"><button class="back" id="btnTutBack">‹</button><span class="pt">使用教程</span></div>
+      <div class="page-body" id="tutBody"></div>
+    </div>
+  </main>
+  <nav>
+    <button class="on" data-tab="tabHome"><span class="ic">❋</span>主页</button>
+    <button data-tab="tabCount"><span class="ic">✚</span>计数</button>
+    <button data-tab="tabShelf"><span class="ic">▤</span>书架</button>
+    <button data-tab="tabSettings"><span class="ic">⚙</span>设置</button>
+  </nav>
+</div>
+
+<!-- 全屏禅修计数 -->
+<div id="zenPage">
+  <div class="zen-top"><span class="zn" id="zenName">念经</span><button class="zx" id="zenExit">退出 ✕</button></div>
+  <div class="zen-main" id="zenMain">
+    <div class="zen-num" id="zenNum">0</div>
+    <div class="zen-hint">轻点屏幕任意处 ＋1</div>
+    <div class="zen-sub" id="zenSub">今日 · 累计</div>
+  </div>
+  <div class="zen-bar">
+    <button id="zenSwitch">换计数器</button>
+    <button id="zenMinus">－1</button>
+    <button class="big" id="zenPlus">＋1</button>
+  </div>
+</div>
+
+<div class="mask" id="inputMask">
+  <div class="dialog">
+    <h3 id="dlgTitle"></h3>
+    <input id="dlgInput" type="text" maxlength="20">
+    <div class="row">
+      <button class="dlg-cancel" id="dlgCancel">取消</button>
+      <button class="dlg-ok" id="dlgOk">确定</button>
+    </div>
+  </div>
+</div>
+<div class="mask" id="confirmMask">
+  <div class="dialog">
+    <h3 id="cfmText"></h3>
+    <div class="row">
+      <button class="dlg-cancel" id="cfmCancel">取消</button>
+      <button class="dlg-ok" id="cfmOk">确定</button>
+    </div>
+  </div>
+</div>
+<div class="mask" id="pickMask">
+  <div class="dialog">
+    <h3>用哪个计数器？</h3>
+    <div id="pickList"></div>
+    <div class="row"><button class="dlg-cancel" id="pickCancel" style="flex:1">取消</button></div>
+  </div>
+</div>
+<div class="mask" id="sutraPickMask">
+  <div class="dialog">
+    <h3>换主页经文</h3>
+    <div id="sutraPickList" class="pick-scroll"></div>
+    <div class="row"><button class="dlg-cancel" id="sutraPickCancel" style="flex:1">取消</button></div>
+  </div>
+</div>
+<div class="mask" id="updateMask">
+  <div class="dialog">
+    <h3 id="updTitle">发现新版本</h3>
+    <div class="upd-ver" id="updVer"></div>
+    <div class="upd-notes" id="updNotes"></div>
+    <div class="row">
+      <button class="dlg-cancel" id="updLater">以后再说</button>
+      <button class="dlg-ok" id="updGo">立即更新</button>
+    </div>
+  </div>
+</div>
+<div class="mask" id="aboutMask">
+  <div class="dialog">
+    <h3>关于与声明</h3>
+    <div class="about-body">
+      <p style="text-align:center;font-weight:700;color:var(--accent-deep);font-size:18px;margin-bottom:2px">点点计数</p>
+      <p class="ab-sub">一款记录念诵、读经次数的小工具 · 永久免费</p>
+      <p>本应用完全免费，不做任何收费、不含广告，也不收集你的任何个人信息。你的计数和记录只保存在你自己的手机里。</p>
+      <p>书架里的经文、咒语内容整理自网络公开版本，仅供学习、交流与参考，不构成任何宗教或专业建议。若与正规寺院、师承的课诵本有出入，请以你常去道场、依止师父的版本为准。</p>
+      <p>争议较大、版本不一的经文没有全部收录。如果你有信任的版本，可以在「设置 → 导入我的经文」里自行粘贴或选 txt 文件导入，存进书架就能读。</p>
+      <p>如发现经文文字或拼音有错，非常欢迎你告诉我，我会尽快更正。联系方式：</p>
+      <p>· 博客：<a href="https://banlublog.pages.dev/" style="color:var(--accent-deep);word-break:break-all">https://banlublog.pages.dev/</a><br>· 邮箱：<a href="mailto:banlu6@qq.com" style="color:var(--accent-deep)">banlu6@qq.com</a><br>· 微信公众号：长按识别下方二维码</p>
+      <p style="text-align:center;margin-top:8px"><img src="img/wechat-qr.jpg" alt="公众号二维码" style="width:170px;height:170px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px"></p>
+      <p class="ab-sub" style="text-align:center;margin-top:10px">南无阿弥陀佛 · 愿你在计数与读诵中安心</p>
+    </div>
+    <label class="about-check"><input type="checkbox" id="aboutNoMore"> 我已阅读，不再提示</label>
+    <div class="row"><button class="dlg-ok" id="aboutClose" style="flex:1">知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="sutras.js"></script>
+<script src="sutra_pinyin.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
