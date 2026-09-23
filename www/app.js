@@ -2,7 +2,7 @@
   'use strict';
 
   /* ══════════ 配置区（发布/更新时改这里） ══════════ */
-  var APP_VERSION = '1.5.2';            // 本版本号，需与 android versionName 一致
+  var APP_VERSION = '1.5.3';            // 本版本号，需与 android versionName 一致
   // 更新检查：填你托管 version.json 的地址（Cloudflare Pages）。
   var UPDATE_VERSION_URL = 'https://diandian-f1q.pages.dev/version.json';
   var UPDATE_APK_FALLBACK = 'https://diandian-f1q.pages.dev/diandian.apk';  // version.json 里没写 url 时的兜底下载地址
