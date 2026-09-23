@@ -12,13 +12,35 @@
     --ink2: #8a8578;
     --accent: #e0a23a;
     --accent-deep: #b97f1e;
+    --accent-press: #b97f1e;
+    --soft: #faf0dd;
+    --soft-a: #f2e2c4;
     --line: #e6e1d6;
     --danger: #c05b4d;
+    --toast-bg: rgba(43,43,43,.92);
+    --toast-fg: #ffffff;
     --fs: 17px;
+  }
+  /* ── 夜间模式：暖调深色，不刺眼 ── */
+  :root[data-theme="dark"] {
+    --bg: #1a1712;
+    --card: #23201a;
+    --ink: #ece7dc;
+    --ink2: #9c9384;
+    --accent: #d99b34;
+    --accent-deep: #eab860;
+    --accent-press: #a5731b;
+    --soft: #2c2617;
+    --soft-a: #38301d;
+    --line: #343022;
+    --danger: #e07a68;
+    --toast-bg: rgba(20,18,14,.94);
+    --toast-fg: #f4f2ed;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
   html,body { height:100%; }
   body { background:var(--bg); color:var(--ink); font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif; }
+  body, header, .tab, .page, nav, .homebar, .pick, .cntbox, .timebox, .card, .book, .set-row, .chart, .rec, .rec-item, .dialog, .tbtn, .mini-btn, .op-btn, .seg button, .switch, .imp-in, .set-btn, .hb-minus, .btn-minus, .addcard, .importbtn, .tut-step, .py-note, .upd-notes { transition: background-color .22s ease, border-color .22s ease, color .22s ease; }
   #app { max-width:560px; margin:0 auto; height:100%; display:flex; flex-direction:column; padding-top:env(safe-area-inset-top); }
 
   /* ── 顶栏 ── */
@@ -52,16 +74,16 @@
   .cntbox .num { font-size:26px; font-weight:700; color:var(--accent-deep); line-height:1; }
   .cntbox .lab { font-size:10px; color:var(--ink2); }
   .btn-plus { width:58px; height:58px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:26px; font-weight:300; line-height:1; touch-action:manipulation; }
-  .btn-plus:active { background:var(--accent-deep); transform:scale(.93); }
+  .btn-plus:active { background:var(--accent-press); transform:scale(.93); }
   .btn-minus { width:30px; height:30px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--ink2); font-size:16px; line-height:1; touch-action:manipulation; }
-  .zenbtn { width:100%; padding:8px 0; border-radius:8px; border:1px solid var(--accent); background:#faf0dd; color:var(--accent-deep); font-size:12px; }
-  .zenbtn:active { background:#f2e2c4; }
+  .zenbtn { width:100%; padding:8px 0; border-radius:8px; border:1px solid var(--accent); background:var(--soft); color:var(--accent-deep); font-size:12px; }
+  .zenbtn:active { background:var(--soft-a); }
   .timebox { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 6px; display:flex; flex-direction:column; align-items:center; gap:6px; }
   .timebox .lab { font-size:10px; color:var(--ink2); }
   .timebox .t { font-size:19px; font-weight:700; font-variant-numeric:tabular-nums; }
   .tbtn { width:100%; padding:8px 0; border-radius:8px; border:1px solid var(--line); background:var(--bg); font-size:12px; }
   .tbtn:active { background:var(--line); }
-  .tbtn.run { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .tbtn.run { background:var(--accent); color:#fff; border-color:var(--accent); }
 
   /* ── 主页底部计数条（拇指区，好按） ── */
   .homebar { flex-shrink:0; display:flex; align-items:center; gap:12px; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); background:var(--card); }
@@ -71,7 +93,7 @@
   .hb-num { font-size:30px; font-weight:700; color:var(--accent-deep); line-height:1; font-variant-numeric:tabular-nums; }
   .hb-lab { font-size:11px; color:var(--ink2); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .hb-plus { width:66px; height:66px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:23px; font-weight:600; line-height:1; touch-action:manipulation; flex-shrink:0; box-shadow:0 4px 12px rgba(224,162,58,.35); }
-  .hb-plus:active { background:var(--accent-deep); transform:scale(.93); }
+  .hb-plus:active { background:var(--accent-press); transform:scale(.93); }
 
   /* ── 书架 ── */
   .shelf-group { font-size:12px; color:var(--ink2); margin:16px 2px 8px; }
@@ -79,7 +101,7 @@
   .book .bt { font-size:16px; font-weight:600; }
   .book .bs { font-size:11px; color:var(--ink2); margin-top:3px; }
   .book .go { color:var(--ink2); font-size:18px; }
-  .book.home::after { content:"在主页"; font-size:10px; color:var(--accent-deep); background:#faf0dd; padding:2px 8px; border-radius:8px; margin-left:8px; }
+  .book.home::after { content:"在主页"; font-size:10px; color:var(--accent-deep); background:var(--soft); padding:2px 8px; border-radius:8px; margin-left:8px; }
   .bk-main { flex:1; min-width:0; }
   .bk-act { display:flex; align-items:center; gap:6px; flex-shrink:0; }
   .fav { background:none; border:none; font-size:22px; line-height:1; color:var(--ink2); padding:2px 4px; }
@@ -94,18 +116,18 @@
   .page-head { padding:calc(12px + env(safe-area-inset-top)) 16px 10px; display:flex; align-items:center; gap:10px; flex-shrink:0; border-bottom:1px solid var(--line); background:var(--bg); }
   .back { background:none; border:none; color:var(--ink); font-size:22px; padding:2px 8px 2px 0; }
   .page-head .pt { flex:1; font-size:17px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .set-home { border:1px solid var(--accent); background:#faf0dd; color:var(--accent-deep); font-size:12px; padding:7px 12px; border-radius:18px; }
+  .set-home { border:1px solid var(--accent); background:var(--soft); color:var(--accent-deep); font-size:12px; padding:7px 12px; border-radius:18px; }
   .set-home.cur { border-color:var(--line); background:var(--bg); color:var(--ink2); }
   .page-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 18px calc(30px + env(safe-area-inset-bottom)); max-width:560px; margin:0 auto; width:100%; }
   .page-body p { font-size:var(--fs); line-height:1.95; margin-bottom:12px; text-align:justify; }
   .page-body .meta { font-size:12px; color:var(--ink2); margin-bottom:16px; }
-  .py-note { font-size:12px; color:var(--ink2); line-height:1.8; background:#faf0dd; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:18px; }
+  .py-note { font-size:12px; color:var(--ink2); line-height:1.8; background:var(--soft); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:18px; }
 
   /* ── 计数页 ── */
   .card { background:var(--card); border:1px solid var(--line); border-radius:14px; margin-bottom:12px; padding:14px 16px; display:flex; align-items:center; gap:10px; }
   .card .info { flex:1; min-width:0; }
   .card .name { font-size:16px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .card .name .home-mark { font-size:10px; color:var(--accent-deep); background:#faf0dd; padding:1px 6px; border-radius:8px; margin-left:6px; font-weight:400; }
+  .card .name .home-mark { font-size:10px; color:var(--accent-deep); background:var(--soft); padding:1px 6px; border-radius:8px; margin-left:6px; font-weight:400; }
   .card .sub { font-size:12px; color:var(--ink2); margin-top:3px; }
   .card .sub b { color:var(--accent-deep); font-weight:700; }
   .mini-btn { padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg); font-size:12px; color:var(--ink2); }
@@ -113,19 +135,19 @@
   .addcard { width:100%; padding:14px 0; border:1px dashed var(--ink2); border-radius:14px; background:none; color:var(--ink2); font-size:14px; margin-bottom:14px; }
 
   /* 详情 */
-  .chart { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 12px 10px; margin-bottom:16px; }
+  .chart { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 12px 10px; margin-bottom:16px; overflow:hidden; }
   .chart .cap { font-size:12px; color:var(--ink2); margin-bottom:10px; padding:0 4px; }
-  .chart .bars { display:flex; align-items:flex-end; gap:4px; height:110px; }
-  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .chart .bars { display:flex; align-items:flex-end; gap:3px; height:110px; }
+  .bar-col { flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
   .bar { width:70%; max-width:26px; background:var(--line); border-radius:3px 3px 0 0; min-height:2px; }
   .bar.hit { background:var(--accent); }
-  .bar-val { font-size:10px; color:var(--ink2); margin-bottom:3px; min-height:12px; }
-  .bar-lab { font-size:10px; color:var(--ink2); margin-top:5px; white-space:nowrap; }
+  .bar-val { font-size:9px; color:var(--ink2); margin-bottom:3px; min-height:12px; }
+  .bar-lab { font-size:9px; color:var(--ink2); margin-top:5px; white-space:nowrap; }
   .rec { background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:18px; }
   .rec-item { display:flex; justify-content:space-between; padding:12px 16px; font-size:14px; border-bottom:1px solid var(--line); }
   .rec-item:last-child { border-bottom:none; }
   .rec-item .n { color:var(--accent-deep); font-weight:600; }
-  .rec-item.today .d::after { content:"今天"; font-size:11px; color:var(--accent-deep); background:#faf0dd; padding:1px 7px; border-radius:8px; margin-left:8px; }
+  .rec-item.today .d::after { content:"今天"; font-size:11px; color:var(--accent-deep); background:var(--soft); padding:1px 7px; border-radius:8px; margin-left:8px; }
   .ops { display:flex; gap:12px; }
   .op-btn { flex:1; padding:13px 0; border-radius:12px; border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:14px; }
   .op-btn:active { background:var(--line); }
@@ -165,7 +187,7 @@
   .switch.on::after { left:23px; }
   .set-btn { padding:9px 16px; border-radius:10px; border:1px solid var(--line); background:var(--bg); font-size:13px; color:var(--ink); }
   .set-btn:active { background:var(--line); }
-  .set-btn.hl { border-color:var(--accent); background:#faf0dd; color:var(--accent-deep); }
+  .set-btn.hl { border-color:var(--accent); background:var(--soft); color:var(--accent-deep); }
   .ver { font-size:12px; color:var(--ink2); text-align:center; margin:22px 0 8px; line-height:1.8; }
 
   /* ── 教程页 ── */
@@ -180,7 +202,7 @@
   textarea.imp-in { min-height:220px; line-height:1.8; resize:vertical; font-family:inherit; }
   .imp-file { margin-top:10px; font-size:13px; color:var(--accent-deep); }
   .imp-save { width:100%; margin-top:20px; padding:15px 0; border-radius:12px; border:none; background:var(--accent); color:#fff; font-size:16px; font-weight:600; }
-  .imp-save:active { background:var(--accent-deep); }
+  .imp-save:active { background:var(--accent-press); }
 
   /* ── 底部导航 ── */
   nav { display:flex; flex-shrink:0; border-top:1px solid var(--line); background:var(--card); padding-bottom:env(safe-area-inset-bottom); max-width:560px; margin:0 auto; width:100%; }
@@ -199,7 +221,7 @@
   .dialog .row button { flex:1; padding:13px 0; border-radius:10px; border:none; font-size:15px; }
   .dlg-cancel { background:var(--bg); color:var(--ink2); border:1px solid var(--line) !important; }
   .dlg-ok { background:var(--accent); color:#fff; }
-  .dlg-ok:active { background:var(--accent-deep); }
+  .dlg-ok:active { background:var(--accent-press); }
   .upd-notes { font-size:14px; line-height:1.8; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:40vh; overflow-y:auto; white-space:pre-wrap; }
   .about-body { max-height:52vh; overflow-y:auto; -webkit-overflow-scrolling:touch; text-align:justify; }
   .about-body p { font-size:14px; line-height:1.85; color:var(--ink); margin-bottom:10px; }
@@ -210,8 +232,42 @@
 
   .fly { position:fixed; z-index:80; pointer-events:none; font-size:20px; font-weight:700; color:var(--accent-deep); animation:flyup .7s ease-out forwards; }
   @keyframes flyup { from {opacity:1; transform:translateY(0);} to {opacity:0; transform:translateY(-46px);} }
-  .toast { position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:rgba(43,43,43,.92); color:#fff; font-size:13px; padding:9px 18px; border-radius:20px; z-index:90; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; max-width:88vw; text-align:center; }
+  .toast { position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:var(--toast-bg); color:var(--toast-fg); font-size:13px; padding:9px 18px; border-radius:20px; z-index:90; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; max-width:88vw; text-align:center; }
   .toast.show { opacity:1; }
+
+  /* ── 听读音频 ── */
+  .listenbar { display:flex; gap:10px; align-items:center; margin:0 0 14px; padding:12px 14px; background:var(--soft); border:1px solid var(--line); border-radius:14px; }
+  .listenbar .lb-play { flex:1; padding:12px 0; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:15px; font-weight:600; }
+  .listenbar .lb-play:active { background:var(--accent-press); }
+  .listenbar .lb-play.ghost { background:var(--card); color:var(--ink); border:1px solid var(--line); font-weight:500; }
+  .listenbar .lb-mgmt { padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink2); font-size:13px; }
+  .listenbar .lb-del { padding:12px 10px; border:1px solid var(--danger); border-radius:10px; background:var(--card); color:var(--danger); font-size:13px; }
+  .bk-audio { font-size:11px; color:var(--accent-deep); margin-left:6px; }
+  .imp-audioname { font-size:12.5px; color:var(--ink2); margin-top:6px; }
+
+  .player { text-align:center; }
+  .player .pl-head { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+  .player .pl-title { flex:1; text-align:left; font-size:16px; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .player .pl-x { border:none; background:transparent; color:var(--ink2); font-size:18px; padding:2px 6px; }
+  .player .pl-sub { text-align:left; font-size:12px; color:var(--ink2); margin-bottom:12px; }
+  .player input[type=range] { width:100%; height:26px; accent-color:var(--accent); }
+  .player .pl-time { display:flex; justify-content:space-between; font-size:12px; color:var(--ink2); margin-top:-2px; }
+  .player .pl-btns { display:flex; align-items:center; justify-content:center; gap:24px; margin:12px 0 6px; }
+  .player .pl-play { width:60px; height:60px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:22px; }
+  .player .pl-play:active { background:var(--accent-press); }
+  .player .pl-mode { min-width:56px; padding:8px 10px; border:1px solid var(--line); border-radius:20px; background:var(--card); color:var(--ink); font-size:12.5px; }
+  .player .pl-mode.on { border-color:var(--accent); color:var(--accent-deep); background:var(--soft); }
+  .player .pl-modes { margin-top:8px; }
+  .player .pl-sleep { padding:8px 16px; border:1px solid var(--line); border-radius:20px; background:var(--card); color:var(--ink); font-size:12.5px; }
+  .player .pl-sleep.on { border-color:var(--accent); color:var(--accent-deep); background:var(--soft); }
+
+  .nppill { position:fixed; left:12px; right:12px; bottom:calc(74px + env(safe-area-inset-bottom)); z-index:58; display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 10px; box-shadow:0 4px 16px rgba(0,0,0,.14); }
+  .nppill-pp { width:38px; height:38px; flex:none; border:none; border-radius:50%; background:var(--accent); color:#fff; font-size:15px; }
+  .nppill-t { flex:1; min-width:0; text-align:left; }
+  .nppill-t span { display:block; }
+  .nppill-t #npTitle { font-size:13.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nppill-s { font-size:11px; color:var(--ink2); }
+  .nppill-x { flex:none; border:none; background:transparent; color:var(--ink2); font-size:16px; padding:4px 8px; }
 </style>
 </head>
 <body>
@@ -287,6 +343,9 @@
         <div class="imp-lab">正文（每段之间空一行）</div>
         <textarea class="imp-in" id="impBody" placeholder="把经文粘贴到这里，&#10;&#10;每段之间空一行，保存后会自动分段。"></textarea>
         <label class="imp-file">或从手机选 .txt 文件导入：<input type="file" id="impFile" accept=".txt,text/plain" style="display:none"></label>
+        <div class="imp-lab" style="margin-top:14px">念诵音频（可选）</div>
+        <label class="imp-file">从手机选一个音频（mp3 / m4a 等），保存后可直接听：<input type="file" id="impAudio" accept="audio/*,.mp3,.m4a,.ogg,.wav,.aac" style="display:none"></label>
+        <div class="imp-audioname" id="impAudioName"></div>
         <button class="imp-save" id="impSave">保存到书架</button>
         <div style="height:20px"></div>
       </div>
@@ -373,6 +432,7 @@
       <p>本应用完全免费，不做任何收费、不含广告，也不收集你的任何个人信息。你的计数和记录只保存在你自己的手机里。</p>
       <p>书架里的经文、咒语内容整理自网络公开版本，仅供学习、交流与参考，不构成任何宗教或专业建议。若与正规寺院、师承的课诵本有出入，请以你常去道场、依止师父的版本为准。</p>
       <p>争议较大、版本不一的经文没有全部收录。如果你有信任的版本，可以在「设置 → 导入我的经文」里自行粘贴或选 txt 文件导入，存进书架就能读。</p>
+      <p>念诵音频不打包在安装包里、而是联网在线播放，放过一次后会自动存进你手机，之后没网也能听——你什么都不用做，App 也因此保持很小的体积。其中《心经》《大悲咒》《六字大明咒》《往生咒》为公共领域（Unlicense，源自 github.com/gong-sh/buddhistsutras）的真人念诵；《地藏经》《金刚经》《药师经》《阿弥陀经》《普门品》《百字明》《文殊心咒》等取自公开的网络公益结缘读诵录音。补好的经文会自动出现在书架、无需你手动导入或重装。你也可以用经文顶部「换音频」把你信任的录音配到任意经文上；导入的音频只保存在你自己手机里，不会上传。上述音频仅用于免费结缘、共修学习，如录音的权属方认为不妥，请告知，我会第一时间下架替换。</p>
       <p>如发现经文文字或拼音有错，非常欢迎你告诉我，我会尽快更正。联系方式：</p>
       <p>· 博客：<a href="https://banlublog.pages.dev/" style="color:var(--accent-deep);word-break:break-all">https://banlublog.pages.dev/</a><br>· 邮箱：<a href="mailto:banlu6@qq.com" style="color:var(--accent-deep)">banlu6@qq.com</a><br>· 微信公众号：长按识别下方二维码</p>
       <p style="text-align:center;margin-top:8px"><img src="img/wechat-qr.jpg" alt="公众号二维码" style="width:170px;height:170px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:6px"></p>
@@ -381,6 +441,25 @@
     <label class="about-check"><input type="checkbox" id="aboutNoMore"> 我已阅读，不再提示</label>
     <div class="row"><button class="dlg-ok" id="aboutClose" style="flex:1">知道了</button></div>
   </div>
+</div>
+<div class="mask" id="playerMask">
+  <div class="dialog player">
+    <div class="pl-head"><span class="pl-title" id="plTitle">—</span><button class="pl-x" id="plClose">✕</button></div>
+    <div class="pl-sub" id="plSub"></div>
+    <input type="range" id="plSeek" min="0" max="1000" value="0" step="1">
+    <div class="pl-time"><span id="plCur">0:00</span><span id="plDur">0:00</span></div>
+    <div class="pl-btns">
+      <button class="pl-mode" id="plLoop">不循环</button>
+      <button class="pl-play" id="plPlay">▶</button>
+      <button class="pl-mode" id="plRate">1x</button>
+    </div>
+    <div class="pl-modes"><button class="pl-sleep" id="plSleep">定时：关</button></div>
+  </div>
+</div>
+<div class="nppill" id="npPill" style="display:none">
+  <button class="nppill-pp" id="npPp">▶</button>
+  <div class="nppill-t"><span id="npTitle">—</span><span class="nppill-s" id="npStat">已暂停</span></div>
+  <button class="nppill-x" id="npStop">✕</button>
 </div>
 <div class="toast" id="toast"></div>
 

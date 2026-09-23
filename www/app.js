@@ -2,12 +2,10 @@
   'use strict';
 
   /* ══════════ 配置区（发布/更新时改这里） ══════════ */
-  var APP_VERSION = '1.4.6';            // 本版本号，需与 android versionName 一致
-  // 更新检查：填你 GitHub 仓库里 version.json 的原始地址（推荐 jsDelivr，国内更稳）。
-  // 例：https://cdn.jsdelivr.net/gh/你的用户名/仓库名@latest/version.json
-  // 留空 = 未配置，"检查更新"会给出提示，不影响其它功能。
-  var UPDATE_VERSION_URL = '';
-  var UPDATE_APK_FALLBACK = '';         // 可选：version.json 里没写 url 时的兜底下载地址
+  var APP_VERSION = '1.5.1';            // 本版本号，需与 android versionName 一致
+  // 更新检查：填你托管 version.json 的地址（Cloudflare Pages）。
+  var UPDATE_VERSION_URL = 'https://diandian-f1q.pages.dev/version.json';
+  var UPDATE_APK_FALLBACK = 'https://diandian-f1q.pages.dev/diandian.apk';  // version.json 里没写 url 时的兜底下载地址
 
   var STORE_KEY = 'diandian_v3';
   var LEGACY_KEYS = ['diandian_v2', 'diandian_counters_v1'];
@@ -124,6 +122,18 @@
   function applyFont() { var i = S('fontScale', 1); document.documentElement.style.setProperty('--fs', (FS[i] || 17) + 'px'); }
   applyFont();
 
+  /* ══════════ 主题（浅色 / 夜间） ══════════ */
+  function darkOn() { return S('theme', 'light') === 'dark'; }
+  function applyTheme() {
+    var dark = darkOn();
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    var mt = document.querySelector('meta[name="theme-color"]');
+    if (!mt) { mt = document.createElement('meta'); mt.name = 'theme-color'; document.head.appendChild(mt); }
+    mt.content = dark ? '#1a1712' : '#f4f2ed';
+  }
+  applyTheme();
+
   /* ── 顶栏日期 ── */
   var weekCN = ['日', '一', '二', '三', '四', '五', '六'];
   function renderTopDate() { var d = new Date(); document.getElementById('topDate').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + weekCN[d.getDay()]; }
@@ -174,6 +184,7 @@
     var bt = document.createElement('div'); bt.className = 'bt'; bt.textContent = s.title;
     var bs = document.createElement('div'); bs.className = 'bs';
     bs.innerHTML = (s.source ? esc(s.source) + ' · ' : '') + s.paras.length + ' 段';
+    if (hasAudio(s.id)) { var au = document.createElement('span'); au.className = 'bk-audio'; au.textContent = '♪ 有声'; bs.appendChild(au); }
     main.appendChild(bt); main.appendChild(bs);
     var act = document.createElement('div'); act.className = 'bk-act';
     var star = document.createElement('button'); star.className = 'fav' + (isFav(s.id) ? ' on' : '');
@@ -219,6 +230,7 @@
     var s = sutraById(id); if (!s) return; currentReadId = id;
     document.getElementById('rTitle').textContent = s.title;
     var body = document.getElementById('rBody'); body.innerHTML = ''; body.scrollTop = 0;
+    body.appendChild(buildListenBar(s));
     if (s.source) { var m = document.createElement('div'); m.className = 'meta'; m.textContent = s.source; body.appendChild(m); }
     var py = SUTRA_PY[s.id];
     var showPy = py && pyOn();
@@ -395,7 +407,9 @@
     document.getElementById('dToday').textContent = dayCount(c, todayKey());
     var bars = document.getElementById('dBars'); bars.innerHTML = '';
     var keys = [], base = new Date(), i, d;
-    for (i = 13; i >= 0; i--) { d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i); keys.push({ key: d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), lab: (d.getMonth() + 1) + '/' + d.getDate() }); }
+    for (i = 13; i >= 0; i--) { d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i); keys.push({ key: d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), lab: '' + d.getDate(), md: (d.getMonth() + 1) + '/' + d.getDate() }); }
+    var capEl = detailPage.querySelector('.chart .cap');
+    if (capEl) capEl.textContent = '最近 14 天 · ' + keys[0].md + ' – ' + keys[keys.length - 1].md;
     var max = 1; keys.forEach(function (o) { max = Math.max(max, dayCount(c, o.key)); });
     keys.forEach(function (o) {
       var n = dayCount(c, o.key);
@@ -426,11 +440,20 @@
 
   /* ══════════ 导入经文 ══════════ */
   var importPage = document.getElementById('importPage');
-  function openImport() { document.getElementById('impName').value = ''; document.getElementById('impSource').value = ''; document.getElementById('impBody').value = ''; importPage.classList.add('open'); }
+  var _impAudioFile = null;
+  function openImport() {
+    document.getElementById('impName').value = ''; document.getElementById('impSource').value = ''; document.getElementById('impBody').value = '';
+    _impAudioFile = null; try { document.getElementById('impAudio').value = ''; } catch (e) {} document.getElementById('impAudioName').textContent = '';
+    importPage.classList.add('open');
+  }
   document.getElementById('btnImportBack').addEventListener('click', function () { importPage.classList.remove('open'); });
   document.getElementById('impFile').addEventListener('change', function (e) {
     var f = e.target.files && e.target.files[0]; if (!f) return;
     var r = new FileReader(); r.onload = function () { document.getElementById('impBody').value = String(r.result || '').replace(/\r/g, ''); if (!document.getElementById('impName').value) document.getElementById('impName').value = f.name.replace(/\.txt$/i, ''); toast('已读取文件'); }; r.readAsText(f, 'utf-8');
+  });
+  document.getElementById('impAudio').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    _impAudioFile = f; document.getElementById('impAudioName').textContent = '已选音频：' + f.name;
   });
   document.getElementById('impSave').addEventListener('click', function () {
     var name = document.getElementById('impName').value.trim();
@@ -443,6 +466,7 @@
     var item = { id: 'u' + Date.now(), title: name, kind: '自定义', source: src, paras: paras, custom: true };
     data.custom = data.custom || []; data.custom.push(item); save();
     importPage.classList.remove('open'); renderShelf(); toast('已导入到书架');
+    if (_impAudioFile) { var f = _impAudioFile; _impAudioFile = null; persistAudio(item.id, f, function (ok) { if (ok) afterAudioChanged(item.id); }); }
   });
 
   /* ══════════ 设置页 ══════════ */
@@ -450,6 +474,7 @@
     var el = document.getElementById('tabSettings'); el.innerHTML = '';
     el.appendChild(group('阅读'));
     el.appendChild(fontRow());
+    el.appendChild(switchRow('夜间模式', '屏幕变深色，夜里读经更护眼', darkOn(), function (on) { data.settings.theme = on ? 'dark' : 'light'; save(); applyTheme(); }));
     el.appendChild(switchRow('拼音注音', '不认识的字，看字上面的小拼音', S('pinyin', true), function (on) { data.settings.pinyin = on; save(); renderHomeSutra(); }));
     el.appendChild(switchRow('按键音', '点计数器加减号时"嗒"一声', S('sound', true), function (on) { data.settings.sound = on; save(); }));
     el.appendChild(group('计数器'));
@@ -506,7 +531,9 @@
     ['⑥ 自己导入经文', '「设置」或「书架」里点「导入我的经文」，把经文文字粘进去，或从手机选一个 txt 文件，保存后就能在书架里读到。'],
     ['⑦ 字太小看不清', '去「设置」里找到「经文文字大小」，有 小 / 标准 / 大 / 特大 四档，点一下就变。'],
     ['⑧ 不认识字？看拼音', '经文里每个字上面都有一行小拼音，跟着念就认得了。不想看拼音，去「设置」把「拼音注音」关掉即可。提醒：佛经里的咒语是古音译字，各寺院念法可能略有不同，App 里标的是最通行的读法，拿不准时以你常去道场的念法为准。'],
-    ['⑨ 换新版本', '「设置」里点「检查更新」。有新版本会提示你，点「立即更新」下载安装即可。你之前的计数和记录都会保留，不会丢。']
+    ['⑨ 换新版本', '「设置」里点「检查更新」。有新版本会提示你，点「立即更新」下载安装即可。你之前的计数和记录都会保留，不会丢。'],
+    ['⑩ 晚上嫌屏幕太亮', '去「设置」把「夜间模式」打开，整个界面会变成深色，夜里读经更护眼、不刺眼；想换回浅色，再关掉即可。'],
+    ['⑪ 跟着真人念诵（听读）', '打开一本经文，最上面有「▶ 听读」，点一下就能一边看一边听。音频是真人慢板念诵（公共领域、可放心使用），联网时在线播、放过一次后会自动存到手机里，之后没网也能听——你什么都不用做。心经、大悲咒、六字大明咒、往生咒已经可以直接听；较长的经典（地藏经、金刚经等）会由作者陆续补上，补好后自动出现在你这里，不用你手动导入、也不用重装。播放器支持：单曲循环、倍速（0.75～1.5 倍）、拖动进度、以及「定时」自动停止（15 / 30 / 60 分钟）。']
   ];
   var tutPage = document.getElementById('tutPage');
   function openTut() {
@@ -525,7 +552,8 @@
     hide(aboutMask);
   });
 
-  /* ══════════ 检查更新（GitHub Releases） ══════════ */
+  /* ══════════ 检查更新（读取托管的 version.json） ══════════ */
+  // cmpVer(a,b)：b 更大返回 1，a 更大返回 -1，相等返回 0
   function cmpVer(a, b) { a = String(a).split('.'); b = String(b).split('.'); for (var i = 0; i < Math.max(a.length, b.length); i++) { var x = +a[i] || 0, y = +b[i] || 0; if (y > x) return 1; if (y < x) return -1; } return 0; }
   var lastUpdUrl = '';
   function checkUpdate(manual) {
@@ -534,7 +562,7 @@
     fetch(UPDATE_VERSION_URL, { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
       var nv = j.version || j.tag_name || '';
       lastUpdUrl = j.url || j.downloadUrl || UPDATE_APK_FALLBACK || '';
-      if (nv && cmpVer(APP_VERSION, nv) < 0) {
+      if (nv && cmpVer(APP_VERSION, nv) > 0) {
         if (!manual && S('dismissedVer', '') === nv) return; // 该版本已跳过
         showUpdate(nv, j.notes || '');
       } else if (manual) { toast('已是最新版本 v' + APP_VERSION); }
@@ -572,6 +600,240 @@
   var toastEl = document.getElementById('toast'), toastTimer = null;
   function toast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800); }
 
+  /* ══════════ 念诵音频播放器（在线流播 + 自动缓存，APK 不打包音频） ══════════ */
+  // 音频文件放在自己的 Cloudflare Pages 的 /audio/ 下，文件名=经文id.mp3；manifest.json 列出哪些已就绪。
+  // 上传同名 mp3 + 在 manifest 里加一行即对所有用户自动生效，用户零操作。首次在线流播，之后自动缓存离线。
+  var AUDIO_BASE = 'https://diandian-f1q.pages.dev/audio/';
+  var AUDIO_MANIFEST_URL = 'https://diandian-f1q.pages.dev/audio/manifest.json';
+  var AUDIO_READY_FALLBACK = ['xinjing', 'jingang', 'amituo', 'pumeng', 'yaoshi', 'dabeizhou', 'baizhiming', 'liuzi', 'wenshu', 'wangsheng', 'dizangjing']; // 未取到 manifest 时的兜底（离线首启也能看到已知的几部）
+  var AUDIO_READY_SET = {}; AUDIO_READY_FALLBACK.forEach(function (x) { AUDIO_READY_SET[x] = true; });
+  function audioUrl(id) { return AUDIO_BASE + encodeURIComponent(id) + '.mp3'; }
+  function capFS() { return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) || null; }
+  function importAudioMap() { return data.settings.importAudio || (data.settings.importAudio = {}); }
+  function cachedAudioPath(id) { var m = S('audioCache', {}); return m && m[id] ? m[id] : null; }
+  function setCachedAudioPath(id, p) { var m = S('audioCache', {}) || {}; m[id] = p; data.settings.audioCache = m; save(); }
+  function isReady(id) { return !!AUDIO_READY_SET[id] || !!importAudioMap()[id]; }
+  function hasAudio(id) { return isReady(id) || !!cachedAudioPath(id); }
+  function audioName(id) { var s = sutraById(id); return s ? s.title : '念诵'; }
+  function fmtT(sec) { if (!isFinite(sec) || sec < 0) return '0:00'; sec = Math.floor(sec); var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + pad(s); }
+
+  function loadAudioManifest() {
+    if (!AUDIO_MANIFEST_URL || !window.fetch) return;
+    fetch(AUDIO_MANIFEST_URL, { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j) return;
+      var set = {};
+      if (Array.isArray(j)) { j.forEach(function (x) { set[String(x).replace(/\.mp3$/i, '')] = true; }); }
+      else { Object.keys(j).forEach(function (k) { if (j[k]) set[String(k).replace(/\.mp3$/i, '')] = true; }); }
+      AUDIO_READY_SET = set;
+      try { renderShelf(); } catch (e) {}
+      try { if (readPage.classList.contains('open') && currentReadId) openRead(currentReadId); } catch (e) {}
+    }).catch(function () { /* 取不到就沿用兜底清单 */ });
+  }
+
+  // 解析实际播放地址：导入 > 已缓存副本 > 在线流播。cb(src, label, isRemote)
+  function resolveAudioSrc(id, cb) {
+    var FS = capFS();
+    var imp = importAudioMap()[id];
+    if (imp) {
+      if (imp.dataUrl) { cb(imp.dataUrl, '我导入的音频', false); return; }
+      if (FS && imp.path) { FS.getUri({ directory: FS.Directory.Data, path: imp.path }).then(function (r) { cb(window.Capacitor.convertFileSrc(r.uri), '我导入的音频', false); }).catch(function () { cb(audioUrl(id), '真人念诵', true); }); return; }
+    }
+    var cp = cachedAudioPath(id);
+    if (FS && cp) { FS.getUri({ directory: FS.Directory.Data, path: cp }).then(function (r) { cb(window.Capacitor.convertFileSrc(r.uri), '真人念诵 · 离线', false); }).catch(function () { cb(audioUrl(id), '真人念诵', true); }); return; }
+    cb(audioUrl(id), '真人念诵', true);
+  }
+
+  var elA = {
+    mask: document.getElementById('playerMask'),
+    title: document.getElementById('plTitle'), sub: document.getElementById('plSub'),
+    seek: document.getElementById('plSeek'), cur: document.getElementById('plCur'), dur: document.getElementById('plDur'),
+    play: document.getElementById('plPlay'), loop: document.getElementById('plLoop'), rate: document.getElementById('plRate'), sleep: document.getElementById('plSleep'),
+    x: document.getElementById('plClose'),
+    pill: document.getElementById('npPill'), npPp: document.getElementById('npPp'), npTitle: document.getElementById('npTitle'), npStat: document.getElementById('npStat'), npStop: document.getElementById('npStop')
+  };
+  var A = new Audio(); A.preload = 'metadata';
+  var pl = { id: null, loop: S('audioLoop', false), rate: S('audioRate', 1), sleepMin: 0, sleepAt: 0, dragging: false };
+  var RATES = [0.75, 1, 1.25, 1.5];
+
+  function openPlayer(id) {
+    if (!id) return;
+    if (pl.id === id && A.getAttribute('src')) { elA.mask.classList.add('show'); updatePill(); syncPlayUI(); return; }
+    resolveAudioSrc(id, function (url, label, isRemote) {
+      if (!url) { toast('这部经文暂时没有音频'); return; }
+      pl.id = id; pl.dragging = false;
+      A.src = url; A.loop = pl.loop; A.playbackRate = pl.rate;
+      elA.title.textContent = audioName(id); elA.sub.textContent = label || '';
+      elA.seek.value = 0; elA.cur.textContent = '0:00'; elA.dur.textContent = '0:00';
+      if (isRemote) toast('正在加载音频…（仅首次，之后可离线）');
+      var pr = A.play(); if (pr && pr.catch) pr.catch(function () {});
+      elA.mask.classList.add('show'); updatePill(); syncPlayUI();
+      if (isRemote) cacheRemote(id);
+    });
+  }
+  function togglePlay() { if (!pl.id) return; if (A.paused) { var pr = A.play(); if (pr && pr.catch) pr.catch(function () {}); } else A.pause(); }
+  function syncPlayUI() {
+    var playing = !!pl.id && !A.paused && !A.ended;
+    elA.play.textContent = playing ? '❚❚' : '▶';
+    elA.npPp.textContent = playing ? '❚❚' : '▶';
+    elA.npStat.textContent = playing ? '播放中' : '已暂停';
+    elA.loop.textContent = pl.loop ? '单曲循环' : '不循环'; elA.loop.classList.toggle('on', pl.loop);
+    elA.rate.textContent = pl.rate + 'x';
+    elA.sleep.textContent = '定时：' + (pl.sleepMin ? pl.sleepMin + '分' : '关'); elA.sleep.classList.toggle('on', !!pl.sleepMin);
+  }
+  function updatePill() {
+    if (!pl.id || elA.mask.classList.contains('show')) { elA.pill.style.display = 'none'; return; }
+    elA.pill.style.display = 'flex'; elA.npTitle.textContent = audioName(pl.id); syncPlayUI();
+  }
+  function closePlayerSheet() { elA.mask.classList.remove('show'); updatePill(); }
+  function stopAudio() { try { A.pause(); A.removeAttribute('src'); A.load(); } catch (e) {} pl.id = null; pl.sleepAt = 0; pl.sleepMin = 0; elA.pill.style.display = 'none'; elA.mask.classList.remove('show'); }
+  function removeAudio(id) {
+    var m = importAudioMap(); if (!m[id]) return;
+    var p = m[id].path; delete m[id]; save();
+    var FS = capFS(); if (FS && p) { try { FS.deleteFile({ path: p, directory: FS.Directory.Data }); } catch (e) {} }
+    if (pl.id === id) stopAudio();
+    renderShelf();
+    if (readPage.classList.contains('open') && currentReadId === id) openRead(id);
+    if (S('homeSutra', '') === id) renderHomeSutra();
+    toast('已移除音频');
+  }
+
+  A.addEventListener('loadedmetadata', function () { elA.dur.textContent = fmtT(A.duration); });
+  A.addEventListener('timeupdate', function () {
+    if (pl.dragging) return;
+    if (A.duration) elA.seek.value = Math.round(A.currentTime / A.duration * 1000);
+    elA.cur.textContent = fmtT(A.currentTime);
+    if (pl.sleepAt && Date.now() >= pl.sleepAt) { A.pause(); pl.sleepAt = 0; pl.sleepMin = 0; toast('定时到，已停止播放'); syncPlayUI(); }
+  });
+  A.addEventListener('ended', syncPlayUI);
+  A.addEventListener('play', syncPlayUI); A.addEventListener('pause', syncPlayUI);
+  A.addEventListener('error', function () {
+    if (!pl.id) return;
+    toast('该经文音频还没准备好，稍后再试试');
+    syncPlayUI();
+  });
+
+  // ArrayBuffer → base64（分块，避免超长调用栈）
+  function abToB64(buf) {
+    var bytes = new Uint8Array(buf), CHUNK = 0x8000, bin = '';
+    for (var i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+  // 首次在线播放后，后台把音频下到本地，下次可离线听。失败就静默降级为继续流播。
+  function cacheRemote(id) {
+    var FS = capFS(); if (!FS) return; // 只在 App（原生）里缓存，网页预览不缓存
+    if (cachedAudioPath(id) || importAudioMap()[id]) return;
+    if (!window.fetch) return;
+    try {
+      fetch(audioUrl(id)).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+        var fname = 'cache_' + id + '.mp3';
+        return FS.writeFile({ path: fname, data: abToB64(buf), directory: FS.Directory.Data, recursive: true });
+      }).then(function () {
+        setCachedAudioPath(id, 'cache_' + id + '.mp3');
+        if (pl.id === id) { elA.sub.textContent = '真人念诵 · 已存离线'; }
+      }).catch(function () { /* 取不到就算了，在线听照样能听 */ });
+    } catch (e) {}
+  }
+
+  elA.seek.addEventListener('input', function () { pl.dragging = true; if (A.duration) elA.cur.textContent = fmtT(A.duration * elA.seek.value / 1000); });
+  function doSeek() { if (A.duration) { try { A.currentTime = A.duration * elA.seek.value / 1000; } catch (e) {} } pl.dragging = false; }
+  elA.seek.addEventListener('change', doSeek);
+  elA.seek.addEventListener('pointerup', doSeek);
+  elA.play.addEventListener('click', togglePlay);
+  elA.x.addEventListener('click', closePlayerSheet);
+  elA.mask.addEventListener('click', function (e) { if (e.target === elA.mask) closePlayerSheet(); });
+  elA.loop.addEventListener('click', function () { pl.loop = !pl.loop; A.loop = pl.loop; data.settings.audioLoop = pl.loop; save(); syncPlayUI(); });
+  elA.rate.addEventListener('click', function () { var i = RATES.indexOf(pl.rate); i = (i + 1) % RATES.length; pl.rate = RATES[i]; A.playbackRate = pl.rate; data.settings.audioRate = pl.rate; save(); syncPlayUI(); });
+  var SLEEPS = [0, 15, 30, 60];
+  elA.sleep.addEventListener('click', function () {
+    var i = SLEEPS.indexOf(pl.sleepMin); i = (i + 1) % SLEEPS.length; pl.sleepMin = SLEEPS[i];
+    if (pl.sleepMin) { pl.sleepAt = Date.now() + pl.sleepMin * 60000; toast('将在 ' + pl.sleepMin + ' 分钟后自动停止'); }
+    else { pl.sleepAt = 0; toast('已取消定时停止'); }
+    syncPlayUI();
+  });
+  elA.pill.addEventListener('click', function (e) { if (e.target === elA.npPp || e.target === elA.npStop) return; openPlayer(pl.id); });
+  elA.npPp.addEventListener('click', function (e) { e.stopPropagation(); togglePlay(); });
+  elA.npStop.addEventListener('click', function (e) { e.stopPropagation(); stopAudio(); });
+
+  /* ── 导入 / 更换音频 ── */
+  function pickAudioFile(cb) { var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'audio/*,.mp3,.m4a,.ogg,.wav,.aac'; inp.onchange = function () { var f = inp.files && inp.files[0]; if (f) cb(f); }; inp.click(); }
+  function persistAudio(id, file, done) {
+    if (file.size > 260 * 1024 * 1024) { toast('音频太大（超过 260MB），先压缩一下'); if (done) done(false); return; }
+    toast('正在导入音频…');
+    var FS = capFS(); var reader = new FileReader();
+    reader.onload = function () {
+      var dataUrl = String(reader.result || '');
+      if (FS) {
+        var b64 = dataUrl.split(',')[1] || '';
+        var ext = (file.name.match(/\.[a-z0-9]+$/i) || ['.mp3'])[0].toLowerCase();
+        var fname = 'imp_' + id + '_' + Date.now() + ext;
+        FS.writeFile({ path: fname, data: b64, directory: FS.Directory.Data, recursive: true }).then(function () {
+          var old = importAudioMap()[id]; importAudioMap()[id] = { path: fname, name: file.name }; save();
+          if (old && old.path && old.path !== fname) { try { FS.deleteFile({ path: old.path, directory: FS.Directory.Data }); } catch (e) {} }
+          if (done) done(true);
+        }).catch(function () { toast('音频保存失败'); if (done) done(false); });
+      } else {
+        if (dataUrl.length > 5 * 1024 * 1024) { toast('浏览器预览只支持较小音频；正式 App 无此限制'); if (done) done(false); return; }
+        importAudioMap()[id] = { dataUrl: dataUrl, name: file.name }; save();
+        if (done) done(true);
+      }
+    };
+    reader.onerror = function () { toast('读取音频失败'); if (done) done(false); };
+    reader.readAsDataURL(file);
+  }
+  function afterAudioChanged(id) {
+    toast('音频已就绪');
+    if (pl.id === id) stopAudio();
+    renderShelf();
+    if (readPage.classList.contains('open') && currentReadId === id) openRead(id);
+    if (S('homeSutra', '') === id) renderHomeSutra();
+  }
+  function importAudioFor(id) { pickAudioFile(function (f) { persistAudio(id, f, function (ok) { if (ok) afterAudioChanged(id); }); }); }
+
+  /* ── 阅读页顶部的“听读”条 ── */
+  function buildListenBar(s) {
+    var wrap = document.createElement('div'); wrap.className = 'listenbar';
+    if (hasAudio(s.id)) {
+      var pb = document.createElement('button'); pb.className = 'lb-play'; pb.textContent = '▶ 听读';
+      pb.addEventListener('click', function () { openPlayer(s.id); }); wrap.appendChild(pb);
+      var mg = document.createElement('button'); mg.className = 'lb-mgmt'; mg.textContent = '换音频';
+      mg.addEventListener('click', function () { importAudioFor(s.id); }); wrap.appendChild(mg);
+      if (importAudioMap()[s.id]) { var dl = document.createElement('button'); dl.className = 'lb-del'; dl.textContent = '删除'; dl.addEventListener('click', function () { askConfirm('删除这部经文导入的音频？', function () { removeAudio(s.id); }); }); wrap.appendChild(dl); }
+    } else {
+      var gp = document.createElement('button'); gp.className = 'lb-play ghost'; gp.textContent = '♪ 音频待补充 · 点此导入';
+      gp.addEventListener('click', function () { importAudioFor(s.id); }); wrap.appendChild(gp);
+    }
+    return wrap;
+  }
+  window.__audio = {
+    open: openPlayer, has: hasAudio, importFor: importAudioFor,
+    state: function () { return { id: pl.id, playing: !!pl.id && !A.paused, loop: pl.loop, rate: pl.rate, sleep: pl.sleepMin, dur: A.duration, cur: A.currentTime, sheetOpen: elA.mask.classList.contains('show'), pillShown: elA.pill.style.display !== 'none' }; }
+  };
+
+  /* ══════════ 安卓返回键：逐层退回，不直接退出 ══════════ */
+  // 返回 true = 已消费这次返回（退了一层）；false = 已在最外层，该退出了
+  function closeTopLayer() {
+    var masks = document.querySelectorAll('.mask.show');
+    if (masks.length) { var top = masks[masks.length - 1]; if (top === elA.mask) { closePlayerSheet(); } else { top.classList.remove('show'); } return true; }
+    if (zenPage.classList.contains('open')) { zenPage.classList.remove('open'); return true; }
+    var pages = document.querySelectorAll('.page.open');
+    if (pages.length) { var pg = pages[pages.length - 1]; pg.classList.remove('open'); if (pg.id === 'detailPage') currentDetail = null; return true; }
+    var active = document.querySelector('nav button.on');
+    if (active && active.dataset.tab !== 'tabHome') { var hb = document.querySelector('nav button[data-tab="tabHome"]'); if (hb) hb.click(); return true; }
+    return false;
+  }
+  var lastBackTs = 0;
+  function handleBack() {
+    if (closeTopLayer()) { lastBackTs = 0; return true; }
+    var now = Date.now();
+    if (now - lastBackTs < 2500) { lastBackTs = 0; return false; } // 连按两次才退出
+    lastBackTs = now; toast('再按一次退出点点计数'); return true;
+  }
+  window.__handleBack = handleBack; // 供自检调用
+  var CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (CapApp) { try { CapApp.addListener('backButton', function () { if (!handleBack()) { try { CapApp.exitApp(); } catch (e) {} } }); } catch (e) {} }
+
   /* ── 首次启动 ── */
   if (!data.counters.length && !S('seeded', false)) {
     data.counters.push({ id: 'c_default', name: '念经', days: {} });
@@ -584,6 +846,7 @@
   }
 
   renderHomeSutra(); renderRail(); renderCountTab();
+  try { loadAudioManifest(); } catch (e) {}
 
   // 首次进入弹「关于与声明」；已勾选"不再提示"则跳过
   if (!S('aboutSeen', false)) {
