@@ -236,12 +236,14 @@
   .toast.show { opacity:1; }
 
   /* ── 听读音频 ── */
-  .listenbar { display:flex; gap:10px; align-items:center; margin:0 0 14px; padding:12px 14px; background:var(--soft); border:1px solid var(--line); border-radius:14px; }
+  .listenbar { display:flex; gap:8px; align-items:center; margin:0 0 14px; padding:10px 12px; background:var(--soft); border:1px solid var(--line); border-radius:14px; }
   .listenbar .lb-play { flex:1; padding:12px 0; border:none; border-radius:10px; background:var(--accent); color:#fff; font-size:15px; font-weight:600; }
   .listenbar .lb-play:active { background:var(--accent-press); }
   .listenbar .lb-play.ghost { background:var(--card); color:var(--ink); border:1px solid var(--line); font-weight:500; }
-  .listenbar .lb-mgmt { padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink2); font-size:13px; }
-  .listenbar .lb-del { padding:12px 10px; border:1px solid var(--danger); border-radius:10px; background:var(--card); color:var(--danger); font-size:13px; }
+  .listenbar .lb-chip { padding:12px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink2); font-size:12px; font-weight:600; min-width:56px; }
+  .listenbar .lb-chip.on { background:var(--soft-a); border-color:var(--accent); color:var(--accent-deep); }
+  .listenbar .lb-mgmt { padding:12px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink2); font-size:12px; }
+  .listenbar .lb-del { padding:12px 10px; border:1px solid var(--danger); border-radius:10px; background:var(--card); color:var(--danger); font-size:12px; }
   .bk-audio { font-size:11px; color:var(--accent-deep); margin-left:6px; }
   .imp-audioname { font-size:12.5px; color:var(--ink2); margin-top:6px; }
 

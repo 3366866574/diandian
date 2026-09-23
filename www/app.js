@@ -2,7 +2,7 @@
   'use strict';
 
   /* ══════════ 配置区（发布/更新时改这里） ══════════ */
-  var APP_VERSION = '1.5.1';            // 本版本号，需与 android versionName 一致
+  var APP_VERSION = '1.5.2';            // 本版本号，需与 android versionName 一致
   // 更新检查：填你托管 version.json 的地址（Cloudflare Pages）。
   var UPDATE_VERSION_URL = 'https://diandian-f1q.pages.dev/version.json';
   var UPDATE_APK_FALLBACK = 'https://diandian-f1q.pages.dev/diandian.apk';  // version.json 里没写 url 时的兜底下载地址
@@ -168,6 +168,7 @@
     var h = document.createElement('div'); h.className = 'sutra-head'; h.textContent = s.title;
     pane.appendChild(h);
     if (s.source) { var f = document.createElement('div'); f.className = 'sutra-from'; f.textContent = s.source; pane.appendChild(f); }
+    try { pane.appendChild(buildListenBar(s)); } catch (e) {}
     var body = document.createElement('div'); body.className = 'sutra-body';
     var py = SUTRA_PY[s.id];
     var showPy = py && pyOn();
@@ -679,6 +680,9 @@
     elA.loop.textContent = pl.loop ? '单曲循环' : '不循环'; elA.loop.classList.toggle('on', pl.loop);
     elA.rate.textContent = pl.rate + 'x';
     elA.sleep.textContent = '定时：' + (pl.sleepMin ? pl.sleepMin + '分' : '关'); elA.sleep.classList.toggle('on', !!pl.sleepMin);
+    // 同步所有可见的听读条上的 mini 芯片（主页 + 阅读页各一个）
+    var chipsR = document.querySelectorAll('.lb-rate'); for (var i = 0; i < chipsR.length; i++) chipsR[i].textContent = pl.rate + 'x';
+    var chipsL = document.querySelectorAll('.lb-loop'); for (var j = 0; j < chipsL.length; j++) { chipsL[j].textContent = pl.loop ? '↻ 循环' : '↺ 单次'; chipsL[j].classList.toggle('on', pl.loop); }
   }
   function updatePill() {
     if (!pl.id || elA.mask.classList.contains('show')) { elA.pill.style.display = 'none'; return; }
@@ -797,15 +801,21 @@
     if (hasAudio(s.id)) {
       var pb = document.createElement('button'); pb.className = 'lb-play'; pb.textContent = '▶ 听读';
       pb.addEventListener('click', function () { openPlayer(s.id); }); wrap.appendChild(pb);
-      var mg = document.createElement('button'); mg.className = 'lb-mgmt'; mg.textContent = '换音频';
+      var rt = document.createElement('button'); rt.className = 'lb-chip lb-rate'; rt.textContent = pl.rate + 'x';
+      rt.addEventListener('click', function (e) { e.stopPropagation(); cycleRate(); }); wrap.appendChild(rt);
+      var lp = document.createElement('button'); lp.className = 'lb-chip lb-loop' + (pl.loop ? ' on' : ''); lp.textContent = pl.loop ? '↻ 循环' : '↺ 单次';
+      lp.addEventListener('click', function (e) { e.stopPropagation(); toggleLoop(); }); wrap.appendChild(lp);
+      var mg = document.createElement('button'); mg.className = 'lb-mgmt'; mg.textContent = '换';
       mg.addEventListener('click', function () { importAudioFor(s.id); }); wrap.appendChild(mg);
-      if (importAudioMap()[s.id]) { var dl = document.createElement('button'); dl.className = 'lb-del'; dl.textContent = '删除'; dl.addEventListener('click', function () { askConfirm('删除这部经文导入的音频？', function () { removeAudio(s.id); }); }); wrap.appendChild(dl); }
+      if (importAudioMap()[s.id]) { var dl = document.createElement('button'); dl.className = 'lb-del'; dl.textContent = '删'; dl.addEventListener('click', function () { askConfirm('删除这部经文导入的音频？', function () { removeAudio(s.id); }); }); wrap.appendChild(dl); }
     } else {
       var gp = document.createElement('button'); gp.className = 'lb-play ghost'; gp.textContent = '♪ 音频待补充 · 点此导入';
       gp.addEventListener('click', function () { importAudioFor(s.id); }); wrap.appendChild(gp);
     }
     return wrap;
   }
+  function cycleRate() { var i = RATES.indexOf(pl.rate); i = (i + 1) % RATES.length; pl.rate = RATES[i]; A.playbackRate = pl.rate; data.settings.audioRate = pl.rate; save(); syncPlayUI(); }
+  function toggleLoop() { pl.loop = !pl.loop; A.loop = pl.loop; data.settings.audioLoop = pl.loop; save(); syncPlayUI(); }
   window.__audio = {
     open: openPlayer, has: hasAudio, importFor: importAudioFor,
     state: function () { return { id: pl.id, playing: !!pl.id && !A.paused, loop: pl.loop, rate: pl.rate, sleep: pl.sleepMin, dur: A.duration, cur: A.currentTime, sheetOpen: elA.mask.classList.contains('show'), pillShown: elA.pill.style.display !== 'none' }; }
